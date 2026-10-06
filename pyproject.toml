@@ -43,4 +43,9 @@ convention = "pep257"
 
 [tool.pylint.typecheck]
 # scipy.special functions are C ufuncs pylint can't see statically
-generated-members = ["sc\\.betaln"]
+generated-members = ["sc\\.beta.*"]
+
+[tool.pylint.design]
+# The sample size route and function take one argument per query parameter
+max-args = 6
+max-positional-arguments = 6

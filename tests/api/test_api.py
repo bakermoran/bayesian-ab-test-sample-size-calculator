@@ -44,3 +44,45 @@ def test_sample_size_invalid_lift(client):
                                         'expected_relative_lift': 1})
     assert response.status_code == 400
     assert 'expected_relative_lift' in response.json['errors']
+
+
+def test_sample_size_defaults_to_80_percent_power(client):
+    """Power defaults to 0.8 and is echoed back in the inputs."""
+    response = client.get('/api/v1/sample_size/',
+                          query_string={'baseline_conversion_rate': .1,
+                                        'expected_relative_lift': .1})
+    assert response.status_code == 200
+    assert response.json['inputs']['power'] == .8
+    assert response.json['outputs']['sample_size_per_variant'] > 0
+
+
+def test_sample_size_more_power_needs_more_samples(client):
+    """Raising power raises the sample size."""
+    def size(power):
+        response = client.get('/api/v1/sample_size/',
+                              query_string={'baseline_conversion_rate': .1,
+                                            'expected_relative_lift': .1,
+                                            'power': power})
+        return response.json['outputs']['sample_size_per_variant']
+    assert size(.9) > size(.5)
+
+
+@pytest.mark.parametrize('power', [.4, 1])
+def test_sample_size_invalid_power(client, power):
+    """Power outside [0.5, 1) is rejected."""
+    response = client.get('/api/v1/sample_size/',
+                          query_string={'baseline_conversion_rate': .1,
+                                        'expected_relative_lift': .1,
+                                        'power': power})
+    assert response.status_code == 400
+    assert 'power' in response.json['errors']
+
+
+def test_sample_size_too_large(client):
+    """Inputs needing an impractical sample size return a JSON 400."""
+    response = client.get('/api/v1/sample_size/',
+                          query_string={'baseline_conversion_rate': 1e-4,
+                                        'expected_relative_lift': 1e-4,
+                                        'loss_tolerance': 1e-4})
+    assert response.status_code == 400
+    assert 'sample size' in response.json['message']
