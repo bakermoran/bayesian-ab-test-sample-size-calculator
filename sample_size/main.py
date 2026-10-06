@@ -1,11 +1,11 @@
 """main route."""
-import sample_size
 import flask
 
+bp = flask.Blueprint('main', __name__)
 
-@sample_size.app.route('/', methods=["GET"])
+
+@bp.route('/', methods=["GET"])
 def home_view():
     """Return home route."""
-
-    return 'for the api, head to <a href="{0}api/v1">{0}</a>'.format(
-            flask.request.url_root)
+    url_root = flask.request.url_root
+    return f'for the api, head to <a href="{url_root}api/v1">{url_root}</a>'
