@@ -9,13 +9,21 @@ bp = flask.Blueprint('loss_function', __name__)
 
 LOSS_FUNCTION_ARGS = {
     'alpha_a': fields.Int(data_key='alpha_A', required=True,
-                          validate=validate.Range(min=1)),
+                          validate=validate.Range(min=1),
+                          metadata={'description': 'Alpha of the Beta posterior for '
+                                   'variant A (successes + prior).'}),
     'beta_a': fields.Int(data_key='beta_A', required=True,
-                         validate=validate.Range(min=1)),
+                          validate=validate.Range(min=1),
+                          metadata={'description': 'Beta of the Beta posterior for '
+                                   'variant A (failures + prior).'}),
     'alpha_b': fields.Int(data_key='alpha_B', required=True,
-                          validate=validate.Range(min=1)),
+                          validate=validate.Range(min=1),
+                          metadata={'description': 'Alpha of the Beta posterior for '
+                                   'variant B (successes + prior).'}),
     'beta_b': fields.Int(data_key='beta_B', required=True,
-                         validate=validate.Range(min=1)),
+                          validate=validate.Range(min=1),
+                          metadata={'description': 'Beta of the Beta posterior for '
+                                   'variant B (failures + prior).'}),
 }
 
 
@@ -40,14 +48,4 @@ def get_loss_function(alpha_a, beta_a, alpha_b, beta_b):
                                                                      alpha_b,
                                                                      beta_b)
 
-    context = {}
-    context['url'] = flask.request.path
-    inputs = {}
-    inputs['alpha_A'] = alpha_a
-    inputs['beta_A'] = beta_a
-    inputs['alpha_B'] = alpha_b
-    inputs['beta_B'] = beta_b
-    context['inputs'] = inputs
-    context['outputs'] = results
-
-    return flask.jsonify(**context)
+    return flask.jsonify(**results)

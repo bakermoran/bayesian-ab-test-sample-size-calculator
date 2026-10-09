@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>AB test sample size</h1>
+
+<div class="container">
+  <form class="form-table" method="get" action="{{ url_for('main.home_view') }}">
+    <p class="form-row"><label>Baseline conversion rate (0-1)
+      <input name="baseline_conversion_rate" value="{{ form.get('baseline_conversion_rate', '') }}"></label></p>
+    <p><label>Expected relative lift (e.g. 0.1 = +10%)
+      <input name="expected_relative_lift" value="{{ form.get('expected_relative_lift', '') }}"></label></p>
+    <p><label>Loss tolerance
+      <input name="loss_tolerance" placeholder="0.002" value="{{ form.get('loss_tolerance', '') }}"></label></p>
+    <p><label>Power
+      <input name="power" placeholder="0.8" value="{{ form.get('power', '') }}"></label></p>
+    <p><label>Prior alpha
+      <input name="prior_alpha" placeholder="1" value="{{ form.get('prior_alpha', '') }}"></label></p>
+    <p><label>Prior beta
+      <input name="prior_beta" placeholder="1" value="{{ form.get('prior_beta', '') }}"></label></p>
+    <p><button type="submit">Calculate</button></p>
+  </form>
+
+  {% if errors %}
+  <div>
+    <h2 class="error">Errors</h2>
+    <ul>
+      {% for field, messages in errors.items() %}
+      <li class="error">{{ field }}: {{ messages | join(', ') }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  {% if results %}
+  <div>
+    <h2>Results</h2>
+    <ul>
+      <li>Sample size per variant: {{ "{:,}".format(results.sample_size_per_variant) }}</li>
+      <li>Expected loss of choosing B: {{ results.loss_value }}</li>
+      <li>Probability B beats A: {{ results.probability_B_over_A }}</li>
+    </ul>
+  </div>
+  {% endif %}
+
+  <div>
+    <h1>Loss Value</h1>
+    <p>
+        Loss value represents the relative percent (expected value) of decreasing the baseline metric if we stop the test and end up making the wrong decision.
+        If the control is actually better than the variant, but we choose the variant based on the results of the test, we can limit the magnitude that we decrease the conversion rate by.
+    </p>
+    <p>
+        Loss Tolerance means the smallest amount we are willing to lose off of the baseline if we pick the wrong variant.
+        A loss value of 0.2% (0.002) means that we are willing to call the test when we are sure that if the variant is wrong, we will sacrifice no more than 0.2% relative off of the baseline conversion rate in order to make the call and stop the test.
+        We can trade a higher expected loss for faster speed in running a test.
+    </p>
+  </div>
+</div>
+
+  <footer>
+    <p><a href="{{ url_for('openapi.get_docs') }}">API</a></p>
+  </footer>
+
+  {% endblock %}

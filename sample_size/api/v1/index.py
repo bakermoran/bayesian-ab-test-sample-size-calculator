@@ -1,17 +1,8 @@
-"""REST API for v1."""
+"""Shared error handling for the v1 REST API."""
 import flask
 from werkzeug.exceptions import HTTPException
 
 bp = flask.Blueprint('v1', __name__)
-
-
-@bp.route('/api/v1/', methods=["GET"])
-def get_v1():
-    """Return list of services available."""
-    context = {}
-    context['available_services'] = {'sample_size': '/api/v1/sample_size',
-                                     'loss_function': '/api/v1/loss_function'}
-    return flask.jsonify(**context)
 
 
 @bp.app_errorhandler(HTTPException)

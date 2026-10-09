@@ -10,12 +10,18 @@ def client_fixture():
     return app.test_client()
 
 
-def test_index_lists_services(client):
-    """Index route lists the available services."""
+def test_index_serves_openapi_spec(client):
+    """Index route serves the OpenAPI spec covering every service."""
     response = client.get('/api/v1/')
     assert response.status_code == 200
-    assert set(response.json['available_services']) == {'sample_size',
-                                                        'loss_function'}
+    assert response.json['openapi'].startswith('3.')
+    assert set(response.json['paths']) == {'/api/v1/sample_size/',
+                                           '/api/v1/loss_function/'}
+
+
+def test_docs_page(client):
+    """Docs page renders."""
+    assert client.get('/api/docs').status_code == 200
 
 
 def test_loss_function_symmetric_inputs(client):
@@ -24,7 +30,7 @@ def test_loss_function_symmetric_inputs(client):
                           query_string={'alpha_A': 10, 'beta_A': 90,
                                         'alpha_B': 10, 'beta_B': 90})
     assert response.status_code == 200
-    outputs = response.json['outputs']
+    outputs = response.json
     assert outputs['probability_B_greater_than_A'] == pytest.approx(.5)
     assert outputs['choose_variant_A'] == pytest.approx(
         outputs['choose_variant_B'])
@@ -47,13 +53,14 @@ def test_sample_size_invalid_lift(client):
 
 
 def test_sample_size_defaults_to_80_percent_power(client):
-    """Power defaults to 0.8 and is echoed back in the inputs."""
-    response = client.get('/api/v1/sample_size/',
-                          query_string={'baseline_conversion_rate': .1,
-                                        'expected_relative_lift': .1})
-    assert response.status_code == 200
-    assert response.json['inputs']['power'] == .8
-    assert response.json['outputs']['sample_size_per_variant'] > 0
+    """Omitting power gives the same result as passing 0.8."""
+    params = {'baseline_conversion_rate': .1, 'expected_relative_lift': .1}
+    default = client.get('/api/v1/sample_size/', query_string=params)
+    explicit = client.get('/api/v1/sample_size/',
+                          query_string={**params, 'power': .8})
+    assert default.status_code == 200
+    assert default.json == explicit.json
+    assert default.json['sample_size_per_variant'] > 0
 
 
 def test_sample_size_more_power_needs_more_samples(client):
@@ -63,7 +70,7 @@ def test_sample_size_more_power_needs_more_samples(client):
                               query_string={'baseline_conversion_rate': .1,
                                             'expected_relative_lift': .1,
                                             'power': power})
-        return response.json['outputs']['sample_size_per_variant']
+        return response.json['sample_size_per_variant']
     assert size(.9) > size(.5)
 
 

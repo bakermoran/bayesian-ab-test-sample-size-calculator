@@ -1,11 +1,29 @@
 """main route."""
 import flask
+from marshmallow import Schema, ValidationError
+
+from sample_size.api.v1.sample_size import (SAMPLE_SIZE_ARGS,
+                                            _validate_variant_conversion_rate)
+from sample_size.core.stats import _sample_size_fixed_loss_tolerance
 
 bp = flask.Blueprint('main', __name__)
+
+SampleSizeSchema = Schema.from_dict(SAMPLE_SIZE_ARGS)
 
 
 @bp.route('/', methods=["GET"])
 def home_view():
-    """Return home route."""
-    url_root = flask.request.url_root
-    return f'for the api, head to <a href="{url_root}api/v1">{url_root}</a>'
+    """Render the sample size form, and results when it has been submitted."""
+    # Blank inputs mean "use the default"
+    form = {k: v.strip() for k, v in flask.request.args.items() if v.strip()}
+    context = {'form': form, 'errors': None, 'results': None}
+    if form:
+        try:
+            args = SampleSizeSchema().load(form)
+            _validate_variant_conversion_rate(args)
+            context['results'] = _sample_size_fixed_loss_tolerance(**args)
+        except ValidationError as error:
+            context['errors'] = error.messages
+        except ValueError as error:
+            context['errors'] = {'error': [str(error)]}
+    return flask.render_template('index.html', **context)

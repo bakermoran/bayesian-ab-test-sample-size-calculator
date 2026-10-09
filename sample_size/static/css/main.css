@@ -1,0 +1,82 @@
+body {
+  font-family: system-ui, sans-serif;
+  max-width: 640px;
+  margin: 32px auto;
+  padding: 0 16px;
+  line-height: 1.5;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+h1 {
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+}
+
+.error {
+  color: rgb(184, 0, 0);
+}
+
+/* Button */
+button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+button:hover {
+  background-color: #0056b3;
+}
+button:active {
+  background-color: #004085;
+}
+
+/* Input */
+input {
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+input:focus {
+  border-color: #007bff;
+  outline: none;
+}
+
+form .form-row {
+  margin-bottom: 16px;
+  width: 100%;
+  justify-content: space-between;
+}
+
+/* Form */
+.form-table p {
+  margin: 0;
+}
+
+.form-table label {
+  display: grid;
+  grid-template-columns: 1fr 160px;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 0;
+  text-align: left;
+  font-weight: bold;
+}
+
+.form-table input {
+  box-sizing: border-box;
+  width: 100%;
+  text-align: right;
+}
+
+.form-table button {
+  margin-top: 16px;
+  float: right;
+}
