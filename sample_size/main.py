@@ -2,9 +2,14 @@
 import flask
 from marshmallow import Schema, ValidationError
 
-from sample_size.api.v1.sample_size import (SAMPLE_SIZE_ARGS,
-                                            _validate_variant_conversion_rate)
-from sample_size.core.stats import _sample_size_fixed_loss_tolerance
+from sample_size.api.v1.sample_size import (
+    SAMPLE_SIZE_ARGS,
+    _validate_variant_conversion_rate,
+)
+from sample_size.core.stats import (
+    _frequentist_sample_size,
+    _sample_size_fixed_loss_tolerance,
+)
 
 bp = flask.Blueprint('main', __name__)
 
@@ -21,7 +26,14 @@ def home_view():
         try:
             args = SampleSizeSchema().load(form)
             _validate_variant_conversion_rate(args)
-            context['results'] = _sample_size_fixed_loss_tolerance(**args)
+            results = _sample_size_fixed_loss_tolerance(**args)
+            frequentist = _frequentist_sample_size(
+                args['baseline_conversion_rate'],
+                args['expected_relative_lift'], args['power'])
+            results['frequentist_sample_size'] = frequentist
+            results['sample_size_ratio'] = (
+                results['sample_size_per_variant'] / frequentist)
+            context['results'] = results
         except ValidationError as error:
             context['errors'] = error.messages
         except ValueError as error:

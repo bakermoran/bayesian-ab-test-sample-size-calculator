@@ -1,26 +1,33 @@
 {% extends "base.html" %}
 {% block content %}
 <h1>AB test sample size</h1>
+<p class="subtitle">Bayesian sample size, compared to the frequentist estimate</p>
 
 <div class="container">
-  <form class="form-table" method="get" action="{{ url_for('main.home_view') }}">
-    <p class="form-row"><label>Baseline conversion rate (0-1)
+  <form class="form-table card" method="get" action="{{ url_for('main.home_view') }}">
+    <p class="form-row"><label><span>Baseline conversion rate (0-1)
+        <span class="tip-icon" tabindex="0" data-tip="Current conversion rate of the control (A), as a fraction. For example, 0.05 means 5% of users convert today.">?</span></span>
       <input name="baseline_conversion_rate" value="{{ form.get('baseline_conversion_rate', '') }}"></label></p>
-    <p><label>Expected relative lift (e.g. 0.1 = +10%)
+    <p><label><span>Expected relative lift (e.g. 0.1 = +10%)
+        <span class="tip-icon" tabindex="0" data-tip="How much better you expect B to be than A, relative to the baseline. 0.1 means B converts at 1.1 times the baseline rate. Smaller lifts need far more users to detect.">?</span></span>
       <input name="expected_relative_lift" value="{{ form.get('expected_relative_lift', '') }}"></label></p>
-    <p><label>Loss tolerance
+    <p><label><span>Loss tolerance
+        <span class="tip-icon" tabindex="0" data-tip="Largest expected loss you will accept, relative to the baseline, if you pick B and it is actually worse. 0.002 means giving up at most 0.2% of the baseline rate. Higher tolerance means a smaller sample.">?</span></span>
       <input name="loss_tolerance" placeholder="0.002" value="{{ form.get('loss_tolerance', '') }}"></label></p>
-    <p><label>Power
+    <p><label><span>Power
+        <span class="tip-icon" tabindex="0" data-tip="Chance the experiment reaches its goal if the expected lift is real. Frequentist: the test comes out significant (p &lt; 0.05). Bayesian: the expected loss of choosing B ends up at or below your loss tolerance.">?</span></span>
       <input name="power" placeholder="0.8" value="{{ form.get('power', '') }}"></label></p>
-    <p><label>Prior alpha
+    <p><label><span>Prior alpha
+        <span class="tip-icon" tabindex="0" data-tip="Prior successes in the Beta prior on each variant. 1 (with beta 1) is a flat, uninformative prior. Larger values pull estimates toward your prior belief and need more data to overcome.">?</span></span>
       <input name="prior_alpha" placeholder="1" value="{{ form.get('prior_alpha', '') }}"></label></p>
-    <p><label>Prior beta
+    <p><label><span>Prior beta
+        <span class="tip-icon" tabindex="0" data-tip="Prior failures in the Beta prior on each variant. 1 (with alpha 1) is a flat, uninformative prior. Keep alpha / (alpha + beta) near your baseline rate if you use a stronger prior.">?</span></span>
       <input name="prior_beta" placeholder="1" value="{{ form.get('prior_beta', '') }}"></label></p>
     <p><button type="submit">Calculate</button></p>
   </form>
 
   {% if errors %}
-  <div>
+  <div class="card error-card">
     <h2 class="error">Errors</h2>
     <ul>
       {% for field, messages in errors.items() %}
@@ -31,18 +38,46 @@
   {% endif %}
 
   {% if results %}
-  <div>
+  <div class="card">
     <h2>Results</h2>
-    <ul>
-      <li>Sample size per variant: {{ "{:,}".format(results.sample_size_per_variant) }}</li>
-      <li>Expected loss of choosing B: {{ results.loss_value }}</li>
-      <li>Probability B beats A: {{ results.probability_B_over_A }}</li>
-    </ul>
+    <div class="tiles">
+      <div class="tile tile-primary">
+        <div class="tile-label">Bayesian</div>
+        <div class="tile-value">{{ "{:,}".format(results.sample_size_per_variant) }}</div>
+        <div class="tile-note">users per variant</div>
+      </div>
+      <div class="tile">
+        <div class="tile-label">Frequentist</div>
+        <div class="tile-value">{{ "{:,}".format(results.frequentist_sample_size) }}</div>
+        <div class="tile-note">users per variant</div>
+      </div>
+    </div>
+
+    <div class="compare">
+      <div class="bar"><span class="bar-fill bar-bayes" style="width: {{ [results.sample_size_ratio * 100, 100] | min }}%"></span></div>
+      <div class="bar"><span class="bar-fill bar-freq" style="width: {{ [100 / results.sample_size_ratio, 100] | min }}%"></span></div>
+    </div>
+    <p class="compare-note">
+      {% if results.sample_size_ratio < 1 %}
+      Bayesian needs <strong>{{ "{:.0%}".format(results.sample_size_ratio) }}</strong> of the frequentist sample size,
+      <strong>{{ "{:.0%}".format(1 - results.sample_size_ratio) }} fewer</strong> users per variant.
+      {% else %}
+      Bayesian needs <strong>{{ "{:.0%}".format(results.sample_size_ratio) }}</strong> of the frequentist sample size.
+      {% endif %}
+      <span class="muted">Frequentist: two-sided test, 5% significance, same power.</span>
+    </p>
+
+    <dl class="stats">
+      <dt>Expected loss of choosing B</dt>
+      <dd>{{ "{:.4%}".format(results.loss_value) }}</dd>
+      <dt>Probability B beats A</dt>
+      <dd>{{ "{:.1%}".format(results.probability_B_over_A) }}</dd>
+    </dl>
   </div>
   {% endif %}
 
-  <div>
-    <h1>Loss Value</h1>
+  <div class="card">
+    <h2>Loss Value</h2>
     <p>
         Loss value represents the relative percent (expected value) of decreasing the baseline metric if we stop the test and end up making the wrong decision.
         If the control is actually better than the variant, but we choose the variant based on the results of the test, we can limit the magnitude that we decrease the conversion rate by.

@@ -200,3 +200,28 @@ def _sample_size_fixed_loss_tolerance(baseline_conversion_rate,
     context['sample_size_per_variant'] = sample_size
 
     return context
+
+
+def _frequentist_sample_size(baseline_conversion_rate, expected_relative_lift,
+                             power=0.8, significance=0.05):
+    """Find the per-variant sample size for a two-sided two-proportion z-test.
+
+    This is the classic frequentist calculation (e.g. Evan Miller's), using
+    the unpooled normal approximation.
+
+    Returns:
+        int -- sample size per variant, rounded up to a multiple of 10 to
+          match the Bayesian estimate
+    """
+    if expected_relative_lift <= 0:
+        raise ValueError('expected_relative_lift must be greater than 0')
+    if not 0 < power < 1:
+        raise ValueError('power must be between 0 and 1')
+
+    rate_a = baseline_conversion_rate
+    rate_b = rate_a * (1 + expected_relative_lift)
+    z_total = stats.norm.ppf(1 - significance / 2) + stats.norm.ppf(power)
+    sample_size = (z_total ** 2 * (rate_a * (1 - rate_a)
+                                   + rate_b * (1 - rate_b))
+                   / (rate_b - rate_a) ** 2)
+    return max(10, int(np.ceil(sample_size / 10)) * 10)

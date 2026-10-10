@@ -4,6 +4,7 @@ import pytest
 from scipy import integrate, stats
 
 from sample_size.core.stats import (
+    _frequentist_sample_size,
     _loss_choose_b_over_a,
     _loss_choose_b_over_a_quad,
     _observed_rates,
@@ -239,3 +240,14 @@ def test_sample_size_is_smallest_that_meets_tolerance(power):
     assert loss_at(size) <= epsilon
     assert loss_at(size - 10) > epsilon
     assert result['loss_value'] == pytest.approx(loss_at(size))
+
+
+def test_frequentist_sample_size_matches_evan_miller():
+    """5% baseline, +20% relative lift is ~8,200 per variant at 80% power."""
+    assert _frequentist_sample_size(0.05, 0.2) == pytest.approx(8150, abs=100)
+
+
+def test_frequentist_sample_size_invalid_lift():
+    """A non-positive lift has no sample size."""
+    with pytest.raises(ValueError):
+        _frequentist_sample_size(0.05, 0)
