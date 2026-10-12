@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}Analyze an AB test{% endblock %}
+{% block content %}
+<h1>Analyze an AB test</h1>
+<p class="subtitle">Upload a CSV of results for a Bayesian analysis. The file is processed in memory and never stored.</p>
+
+<div class="container">
+  <form class="form-table card" method="post" enctype="multipart/form-data" action="{{ url_for('web.analyze') }}">
+    <p class="form-row"><label><span>CSV file (up to 5 MB)</span>
+      <input type="file" name="file" accept=".csv,text/csv" required></label></p>
+    <p><label><span>Metric column</span>
+      <input name="metric" placeholder="converted" value="{{ form.get('metric', '') }}" required></label></p>
+    <p><label><span>Bucket column</span>
+      <input name="group" placeholder="bucket" value="{{ form.get('group', '') }}"></label></p>
+    <p><label><span>Control bucket</span>
+      <input name="control" placeholder="off" value="{{ form.get('control', '') }}"></label></p>
+    <p><label><span>Metric type
+        <span class="tip-icon" tabindex="0" data-tip="beta: conversions as 0/1. poisson: counts per unit. normal: continuous values. log-normal: continuous values above zero, such as revenue.">?</span></span>
+      <select name="family">
+        {% for family in families %}
+        <option value="{{ family }}" {{ 'selected' if form.get('family', 'beta') == family }}>{{ family }}</option>
+        {% endfor %}
+      </select></label></p>
+    <p><label><span>Prior
+        <span class="tip-icon" tabindex="0" data-tip="empirical: built from the control data, weakened. uninformed: a weak default prior (not available for poisson).">?</span></span>
+      <select name="prior">
+        {% for prior in ['empirical', 'uninformed'] %}
+        <option value="{{ prior }}" {{ 'selected' if form.get('prior', 'empirical') == prior }}>{{ prior }}</option>
+        {% endfor %}
+      </select></label></p>
+    <div class="form-actions">
+      <a class="button button-secondary" href="{{ url_for('web.analyze') }}">Clear</a>
+      <button type="submit">Analyze</button>
+    </div>
+  </form>
+
+  {% if errors %}
+  <div class="card error-card">
+    <h2 class="error">Errors</h2>
+    <ul>
+      {% for field, messages in errors.items() %}
+      <li class="error">{{ field }}: {{ messages | join(', ') }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  {% if results %}
+  <div class="card">
+    <h2>Results</h2>
+    <p class="muted">{{ "{:,}".format(results.rows) }} rows, control: {{ results.control }}</p>
+    {# Conversion rates read best as percents; other metrics keep their units #}
+    {% set is_rate = results.family == 'beta' %}
+    {% macro value(x) %}{{ "{:.2%}".format(x) if is_rate else "{:,.3f}".format(x) }}{% endmacro %}
+    <div class="table-scroll">
+      <table class="results-table">
+        <thead>
+          <tr><th>Bucket</th><th>Mean</th><th>95% interval</th><th>Median lift</th><th>Probability better</th></tr>
+        </thead>
+        <tbody>
+          {% for row in results.summary %}
+          <tr>
+            <th scope="row">{{ row.bucket }}{% if row.bucket == results.control %} <span class="muted">(control)</span>{% endif %}</th>
+            <td>{{ value(row['mean']) }}</td>
+            <td>{{ value(row.ci_low) }} &ndash; {{ value(row.ci_high) }}</td>
+            {% if row.bucket == results.control %}
+            <td class="muted">&ndash;</td><td class="muted">&ndash;</td>
+            {% else %}
+            <td>{{ "{:+.1%}".format(row.median_lift) }}</td>
+            <td>{{ "{:.1%}".format(row.prob_better) }}</td>
+            {% endif %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <figure class="plot">
+      <img src="data:image/png;base64,{{ results.png }}" alt="Posterior distributions and lift">
+      <a class="plot-download" download="ab-test-report.png" href="data:image/png;base64,{{ results.png }}" aria-label="Download the plot as a PNG" title="Download PNG">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v3h16v-3"/></svg>
+      </a>
+    </figure>
+  </div>
+  {% endif %}
+</div>
+<div class="drop-overlay" id="drop-overlay" hidden>
+  <div class="drop-overlay-box">Drop to upload CSV file</div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/dropzone.js') }}" defer></script>
+{% endblock %}

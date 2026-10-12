@@ -1,13 +1,13 @@
 """Tests for the v1 REST API."""
 import pytest
 
-from sample_size import app
+from sample_size import create_app
 
 
 @pytest.fixture(name='client')
 def client_fixture():
     """Return a Flask test client."""
-    return app.test_client()
+    return create_app({"TESTING": True}).test_client()
 
 
 def test_index_serves_openapi_spec(client):

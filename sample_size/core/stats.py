@@ -9,7 +9,7 @@ _TAIL = 1e-12
 _MAX_SAMPLE_SIZE = 10**9
 
 
-def _probability_b_beats_a(alpha_a, beta_a, alpha_b, beta_b):
+def probability_b_beats_a(alpha_a, beta_a, alpha_b, beta_b):
     """Calculate the probablty that a Beta distributions is greater.
 
     Arguments:
@@ -29,7 +29,7 @@ def _probability_b_beats_a(alpha_a, beta_a, alpha_b, beta_b):
                         sc.betaln(alpha_a, beta_a)).sum())
 
 
-def _loss_choose_b_over_a(alpha_a, beta_a, alpha_b, beta_b):
+def loss_choose_b_over_a(alpha_a, beta_a, alpha_b, beta_b):
     """Calc the expected loss of choosing B over A.
 
     Beta_A is Beta(alpha_a, beta_a) and Beta_B is Beta(alpha_b, beta_b).
@@ -45,11 +45,11 @@ def _loss_choose_b_over_a(alpha_a, beta_a, alpha_b, beta_b):
     """
     x1 = sc.betaln(alpha_a + 1, beta_a)
     # P(A' > B) computed directly; 1 - P(B > A') loses precision near 1
-    y1 = np.log(_probability_b_beats_a(alpha_b, beta_b, alpha_a + 1, beta_a))
+    y1 = np.log(probability_b_beats_a(alpha_b, beta_b, alpha_a + 1, beta_a))
     z1 = sc.betaln(alpha_a, beta_a)
 
     x2 = sc.betaln(alpha_b + 1, beta_b)
-    y2 = np.log(_probability_b_beats_a(alpha_b + 1, beta_b, alpha_a, beta_a))
+    y2 = np.log(probability_b_beats_a(alpha_b + 1, beta_b, alpha_a, beta_a))
     z2 = sc.betaln(alpha_b, beta_b)
 
     return float(np.exp(x1 + y1 - z1) - np.exp(x2 + y2 - z2))
@@ -64,7 +64,7 @@ def _integration_bounds(alpha_a, beta_a, alpha_b, beta_b):
     return lower, upper
 
 
-def _probability_b_beats_a_quad(alpha_a, beta_a, alpha_b, beta_b):
+def probability_b_beats_a_quad(alpha_a, beta_a, alpha_b, beta_b):
     """Calculate P(Beta_B > Beta_A) by numerical integration.
 
     Uses P(B > A) = integral of f_B(t) * F_A(t) dt. Unlike the closed form,
@@ -87,7 +87,7 @@ def _probability_b_beats_a_quad(alpha_a, beta_a, alpha_b, beta_b):
         lower, upper, epsabs=1e-13, epsrel=1e-10, limit=200)[0]
 
 
-def _loss_choose_b_over_a_quad(alpha_a, beta_a, alpha_b, beta_b):
+def loss_choose_b_over_a_quad(alpha_a, beta_a, alpha_b, beta_b):
     """Calc the expected loss of choosing B over A by numerical integration.
 
     Uses E[max(A - B, 0)] = integral of F_B(t) * (1 - F_A(t)) dt, since
@@ -137,7 +137,7 @@ def _observed_rates(sample_size, baseline_rate, variant_rate, power):
     return float(rate_a), float(rate_b)
 
 
-def _sample_size_fixed_loss_tolerance(baseline_conversion_rate,
+def sample_size_fixed_loss_tolerance(baseline_conversion_rate,
                                       expected_relative_lift,
                                       loss_tolerance=0.05,
                                       power=0.8,
@@ -173,7 +173,7 @@ def _sample_size_fixed_loss_tolerance(baseline_conversion_rate,
                                    prior_beta))
 
     def excess_loss(sample_size):
-        return _loss_choose_b_over_a_quad(*posteriors(sample_size)) - epsilon
+        return loss_choose_b_over_a_quad(*posteriors(sample_size)) - epsilon
 
     # Double until the loss is within tolerance, then root-find in between
     upper = 10
@@ -195,14 +195,14 @@ def _sample_size_fixed_loss_tolerance(baseline_conversion_rate,
 
     params = posteriors(sample_size)
     context = {}
-    context['loss_value'] = _loss_choose_b_over_a_quad(*params)
-    context['probability_B_over_A'] = _probability_b_beats_a_quad(*params)
+    context['loss_value'] = loss_choose_b_over_a_quad(*params)
+    context['probability_B_over_A'] = probability_b_beats_a_quad(*params)
     context['sample_size_per_variant'] = sample_size
 
     return context
 
 
-def _frequentist_sample_size(baseline_conversion_rate, expected_relative_lift,
+def frequentist_sample_size(baseline_conversion_rate, expected_relative_lift,
                              power=0.8, significance=0.05):
     """Find the per-variant sample size for a two-sided two-proportion z-test.
 

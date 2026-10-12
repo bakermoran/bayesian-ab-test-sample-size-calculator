@@ -89,6 +89,17 @@ Requires [uv](https://docs.astral.sh/uv/).
 ```bash
 uv sync
 uv run flask run
+uv run pytest
 uv run ruff check .
 uv run pylint sample_size
 ```
+
+## Deploying
+
+The app is built by `sample_size.create_app()`. On a small host such as a Raspberry Pi, keep the worker count low (each worker loads pandas, scipy and matplotlib) and preload so workers share memory:
+
+```bash
+uv run gunicorn 'sample_size:create_app()' --workers 2 --preload --timeout 30
+```
+
+The `/analyze/` page reads uploads into memory and never writes them to disk. Uploads are capped at 5 MB (`MAX_UPLOAD_BYTES` in `sample_size/__init__.py`) and 500,000 rows, and at most two analyses run at once (`MAX_CONCURRENT` in `sample_size/core/analysis.py`); further requests get a 503. Put a reverse proxy with per-IP rate limits in front if the site is public.

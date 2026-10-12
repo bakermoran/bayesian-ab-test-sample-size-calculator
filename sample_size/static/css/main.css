@@ -177,8 +177,170 @@ h2 {
   gap: 8px;
 }
 
+/* App cards on the home page */
+.app-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.app-card {
+  display: flex;
+  flex: 1 1 240px;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.app-card p {
+  flex: 1;
+  margin: 0;
+  color: var(--muted);
+}
+
+.app-card .button {
+  align-self: flex-start;
+}
+
+/* Back link pinned to the top left */
+.back-link {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  z-index: 50;
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  text-decoration: none;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
+}
+
+.back-link:hover,
+.back-link:focus {
+  border-color: var(--accent);
+  color: var(--accent);
+  outline: none;
+}
+
+/* Keep the fixed link from covering the title on narrow screens */
+@media (max-width: 760px) {
+  body {
+    margin-top: 72px;
+  }
+}
+
+/* Results table */
+.table-scroll {
+  overflow-x: auto;
+}
+
+.results-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.results-table th,
+.results-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.results-table thead th {
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.results-table th:first-child,
+.results-table td:first-child {
+  text-align: left;
+}
+
+.results-table tbody th {
+  font-weight: 600;
+}
+
+.results-table tbody tr:last-child th,
+.results-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Plot with a download button over it */
+.plot {
+  position: relative;
+  margin: 16px 0 0;
+}
+
+.plot img {
+  display: block;
+  max-width: 100%;
+}
+
+.plot-download {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.plot:hover .plot-download,
+.plot-download:focus {
+  opacity: 1;
+}
+
+.plot-download:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* No hover on touch screens, so always show it */
+@media (hover: none) {
+  .plot-download {
+    opacity: 1;
+  }
+}
+
+/* Full page overlay while dragging a file over the page */
+.drop-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.55);
+  /* Let drag events reach the window, not flicker as they cross the overlay */
+  pointer-events: none;
+}
+
+.drop-overlay[hidden] {
+  display: none;
+}
+
+.drop-overlay-box {
+  padding: 48px 64px;
+  border: 3px dashed var(--accent);
+  border-radius: 16px;
+  background: var(--surface);
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
 /* Button */
-button {
+button,
+.button {
   background-color: #007bff;
   color: white;
   border: none;
@@ -186,10 +348,16 @@ button {
   cursor: pointer;
   border-radius: 4px;
 }
-button:hover {
+.button {
+  display: inline-block;
+  text-decoration: none;
+}
+button:hover,
+.button:hover {
   background-color: #0056b3;
 }
-button:active {
+button:active,
+.button:active {
   background-color: #004085;
 }
 
@@ -236,6 +404,28 @@ form .form-row {
 .form-table button {
   margin-top: 16px;
   float: right;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.form-actions button {
+  margin-top: 0;
+}
+
+.button-secondary {
+  background-color: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+.button-secondary:hover,
+.button-secondary:active {
+  background-color: var(--accent-soft);
 }
 
 .form-table::after {

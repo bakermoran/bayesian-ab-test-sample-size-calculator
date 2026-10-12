@@ -5,7 +5,7 @@ from apispec.ext.marshmallow import MarshmallowPlugin
 from marshmallow import Schema, fields
 
 from sample_size.api.v1.loss_function import LOSS_FUNCTION_ARGS
-from sample_size.api.v1.sample_size import SAMPLE_SIZE_ARGS
+from sample_size.schemas import SAMPLE_SIZE_ARGS
 
 bp = flask.Blueprint('openapi', __name__)
 
@@ -24,6 +24,12 @@ class SampleSizeResponse(Schema):
         metadata={'description': 'Probability that B beats A.'})
     sample_size_per_variant = fields.Int(
         metadata={'description': 'Required sample size for each variant.'})
+    frequentist_sample_size = fields.Int(
+        metadata={'description': 'Sample size per variant of a two-sided '
+                                 'z-test at 5% significance and the same '
+                                 'power.'})
+    sample_size_ratio = fields.Float(
+        metadata={'description': 'Bayesian over frequentist sample size.'})
 
 
 class LossFunctionResponse(Schema):

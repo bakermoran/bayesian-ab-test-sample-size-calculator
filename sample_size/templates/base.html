@@ -8,6 +8,7 @@
   {% block head %}{% endblock %}
 </head>
 <body>
+  {% block back %}<a class="back-link" href="{{ url_for('web.home') }}">&larr; Back</a>{% endblock %}
   {% block content %}{% endblock %}
   <script src="{{ url_for('static', filename='js/tooltip.js') }}" defer></script>
   {% block scripts %}{% endblock %}
